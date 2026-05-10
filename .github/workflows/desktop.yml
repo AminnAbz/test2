@@ -1,0 +1,41 @@
+name: web-desktop
+
+on:
+  workflow_dispatch:
+
+jobs:
+  desktop:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: install desktop
+        run: |
+          sudo apt update
+          sudo apt install -y xfce4 xfce4-goodies tightvncserver curl wget
+
+      - name: start vnc
+        run: |
+          vncserver :1
+          export DISPLAY=:1
+          startxfce4 &
+
+      - name: install novnc
+        run: |
+          git clone https://github.com/novnc/noVNC.git
+          git clone https://github.com/novnc/websockify noVNC/utils/websockify
+
+      - name: start novnc
+        run: |
+          ./noVNC/utils/novnc_proxy --vnc localhost:5901 &
+
+      - name: install cloudflare tunnel
+        run: |
+          wget https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
+          chmod +x cloudflared-linux-amd64
+          sudo mv cloudflared-linux-amd64 /usr/local/bin/cloudflared
+
+      - name: start tunnel
+        run: |
+          cloudflared tunnel --url http://localhost:6080 &
+          sleep 15
+          sleep 20000
