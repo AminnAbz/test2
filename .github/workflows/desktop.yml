@@ -10,40 +10,11 @@ jobs:
 
     steps:
 
-      - name: Install packages
+      - name: Run Desktop Container
         run: |
-          sudo apt update
-          sudo DEBIAN_FRONTEND=noninteractive apt install -y \
-            xfce4 xfce4-goodies \
-            tightvncserver \
-            git wget curl
-
-      - name: Configure VNC
-        run: |
-          mkdir -p ~/.vnc
-
-          printf "12345678\n12345678\nn\n" | vncpasswd
-
-          cat > ~/.vnc/xstartup << 'EOF'
-          #!/bin/bash
-          startxfce4 &
-          EOF
-
-          chmod +x ~/.vnc/xstartup
-
-      - name: Start VNC server
-        run: |
-          vncserver :1 -geometry 1280x800 -depth 24
-
-      - name: Install noVNC
-        run: |
-          git clone https://github.com/novnc/noVNC.git
-          git clone https://github.com/novnc/websockify noVNC/utils/websockify
-
-      - name: Start noVNC
-        run: |
-          ./noVNC/utils/novnc_proxy --vnc localhost:5901 &
-          sleep 5
+          docker run -d \
+          -p 6080:80 \
+          dorowu/ubuntu-desktop-lxde-vnc
 
       - name: Install cloudflared
         run: |
@@ -54,13 +25,7 @@ jobs:
       - name: Start tunnel
         run: |
           cloudflared tunnel --url http://localhost:6080 > tunnel.log 2>&1 &
-
           sleep 15
-
           cat tunnel.log
-
-          echo ""
-          echo "Look for the trycloudflare.com URL above"
-          echo ""
-
+          echo "Find the trycloudflare.com link above"
           sleep 20000
