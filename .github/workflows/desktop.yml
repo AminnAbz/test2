@@ -1,4 +1,4 @@
-name: Web Desktop
+name: Desktop
 
 on:
   workflow_dispatch:
@@ -10,22 +10,17 @@ jobs:
 
     steps:
 
-      - name: Run Desktop Container
+      - name: Start Desktop
         run: |
-          docker run -d \
-          -p 6080:80 \
-          dorowu/ubuntu-desktop-lxde-vnc
+          docker run -d --name desktop -p 6080:80 dorowu/ubuntu-desktop-lxde-vnc
+          sleep 20
+          curl -I http://localhost:6080
 
-      - name: Install cloudflared
+      - name: Install SSH
         run: |
-          wget https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
-          chmod +x cloudflared-linux-amd64
-          sudo mv cloudflared-linux-amd64 /usr/local/bin/cloudflared
+          sudo apt update
+          sudo apt install -y openssh-client
 
-      - name: Start tunnel
+      - name: Create Tunnel
         run: |
-          cloudflared tunnel --url http://localhost:6080 > tunnel.log 2>&1 &
-          sleep 15
-          cat tunnel.log
-          echo "Find the trycloudflare.com link above"
-          sleep 20000
+          ssh -o StrictHostKeyChecking=no -R 80:localhost:6080 ssh.localhost.run
